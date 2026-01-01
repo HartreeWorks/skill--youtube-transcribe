@@ -21,7 +21,7 @@ Transcribe YouTube videos locally using Parakeet MLX (fast, runs on Apple Silico
 
 - `yt-dlp` for downloading audio
 - `ffmpeg` for audio processing
-- **transcribe-audio skill** for transcription (uses Parakeet MLX)
+- [transcribe-audio skill](https://github.com/HartreeWorks/skill--transcribe-audio) for transcription (uses Parakeet MLX)
 
 ## Workflow
 
