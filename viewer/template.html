@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcript Library</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --bg-page: #faf8f5;
+            --bg-sidebar: #f0ebe4;
+            --bg-sidebar-hover: #e8e2d9;
+            --bg-sidebar-active: #e0d9cd;
+            --text-primary: #2a2a2a;
+            --text-secondary: #5a5a5a;
+            --text-tertiary: #8a8a8a;
+            --accent: #b85a3a;
+            --accent-light: #d4a088;
+            --border: #d8d2c8;
+            --border-light: #e8e2d9;
+            --quote-bg: #f5f0e8;
+            --shadow-sm: 0 1px 3px rgba(42, 42, 42, 0.06);
+            --shadow-md: 0 4px 12px rgba(42, 42, 42, 0.08);
+            --font-display: 'Playfair Display', Georgia, serif;
+            --font-body: 'Source Serif 4', Georgia, serif;
+            --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
+            --sidebar-width: 320px;
+            --content-max-width: 680px;
+            --line-height: 1.7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font-size: 18px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-page);
+            color: var(--text-primary);
+            line-height: var(--line-height);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Layout */
+        .layout {
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 28px 24px 20px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .sidebar-title {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        .sidebar-title span {
+            color: var(--accent);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 14px;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(184, 90, 58, 0.1);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .video-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 0;
+        }
+
+        .video-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .video-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .video-list::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        .video-item {
+            padding: 14px 24px;
+            cursor: pointer;
+            transition: background 0.15s;
+            border-left: 3px solid transparent;
+        }
+
+        .video-item:hover {
+            background: var(--bg-sidebar-hover);
+        }
+
+        .video-item.active {
+            background: var(--bg-sidebar-active);
+            border-left-color: var(--accent);
+        }
+
+        .video-date {
+            font-family: var(--font-mono);
+            font-size: 0.67rem;
+            font-weight: 500;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 4px;
+        }
+
+        .video-title {
+            font-family: var(--font-display);
+            font-size: 0.94rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.35;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .video-channel {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+        }
+
+        .sidebar-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .video-count {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--text-tertiary);
+        }
+
+        /* Main Content */
+        .main {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            padding: 48px 48px 96px;
+        }
+
+        .content {
+            width: 100%;
+            max-width: var(--content-max-width);
+        }
+
+        /* Video Header - Clean Layout */
+        .video-header {
+            margin-bottom: 28px;
+        }
+
+        .header-content {
+            margin-bottom: 20px;
+        }
+
+        .header-title {
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            font-weight: 700;
+            line-height: 1.2;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+            margin: 0 0 10px 0;
+        }
+
+        .header-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 0 0 14px 0;
+        }
+
+        .header-channel {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            font-weight: 500;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .header-meta-divider {
+            width: 3px;
+            height: 3px;
+            background: var(--text-tertiary);
+            border-radius: 50%;
+        }
+
+        .header-date {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--text-tertiary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .action-button.youtube {
+            color: #cc0000;
+            border-color: #cc0000;
+        }
+
+        .action-button.youtube:hover {
+            background: #fff0f0;
+        }
+
+        .action-button.unread-btn {
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .action-button.unread-btn:hover {
+            background: #fef3f0;
+        }
+
+        /* Thumbnail below header */
+        .header-thumbnail {
+            display: block;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+        }
+
+        .header-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .header-thumbnail:hover img {
+            transform: scale(1.02);
+        }
+
+        /* Play button overlay */
+        .header-thumbnail {
+            position: relative;
+        }
+
+        .header-thumbnail::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.3) 0%, transparent 40%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .header-thumbnail:hover::after {
+            opacity: 1;
+        }
+
+        .play-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            width: 64px;
+            height: 64px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 1;
+        }
+
+        .header-thumbnail:hover .play-icon {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .play-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--accent);
+            margin-left: 3px;
+        }
+
+        /* Filter Tabs */
+        .filter-tabs {
+            display: flex;
+            gap: 4px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-tab {
+            padding: 6px 10px;
+            font-family: var(--font-mono);
+            font-size: 0.67rem;
+            font-weight: 500;
+            color: var(--text-tertiary);
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .filter-tab:hover {
+            color: var(--text-secondary);
+            background: var(--bg-sidebar-hover);
+        }
+
+        .filter-tab.active {
+            color: var(--accent);
+            background: var(--bg-page);
+            border-color: var(--border);
+        }
+
+        .filter-tab .count {
+            margin-left: 4px;
+            opacity: 0.7;
+        }
+
+        /* Read/Unread Indicator */
+        .video-item.unread .video-title {
+            font-weight: 700;
+        }
+
+        .video-item.unread::after {
+            content: '';
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
+
+        .video-item {
+            position: relative;
+        }
+
+        .video-item.starred .video-date::before {
+            content: '\u2605 ';
+            color: #d4a017;
+        }
+
+        /* Action Buttons */
+        .action-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-tertiary);
+        }
+
+        .action-button:hover {
+            background: var(--bg-sidebar);
+            color: var(--text-secondary);
+        }
+
+        .action-button svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        .action-button.starred {
+            color: #d4a017;
+            border-color: #d4a017;
+            background: #fffbeb;
+        }
+
+        .action-button.archived {
+            color: var(--text-secondary);
+            background: var(--bg-sidebar);
+        }
+
+        .action-button.delete:hover {
+            color: #c53030;
+            border-color: #c53030;
+            background: #fff5f5;
+        }
+
+        /* Article Content */
+        .article {
+            font-size: 1rem;
+            line-height: var(--line-height);
+        }
+
+        .article h1 {
+            display: none; /* Hidden since we show title in header */
+        }
+
+        .article h2 {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 48px 0 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-light);
+            letter-spacing: -0.01em;
+        }
+
+        .article h2:first-of-type {
+            margin-top: 0;
+        }
+
+        .article h3 {
+            font-family: var(--font-display);
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 32px 0 16px;
+        }
+
+        .article p {
+            margin-bottom: 1.4em;
+            color: var(--text-primary);
+        }
+
+        .article strong {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .article a {
+            color: var(--accent);
+            text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 2px;
+            transition: color 0.15s;
+        }
+
+        .article a:hover {
+            color: var(--text-primary);
+        }
+
+        /* Lists - Key Points */
+        .article ul, .article ol {
+            margin: 0 0 1.4em;
+            padding-left: 0;
+            list-style: none;
+        }
+
+        .article li {
+            position: relative;
+            padding-left: 24px;
+            margin-bottom: 12px;
+        }
+
+        .article ul li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 11px;
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
+
+        .article ol {
+            counter-reset: list-counter;
+        }
+
+        .article ol li {
+            counter-increment: list-counter;
+        }
+
+        .article ol li::before {
+            content: counter(list-counter) ".";
+            position: absolute;
+            left: 0;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--accent);
+        }
+
+        /* Blockquotes - Pull Quote Style */
+        .article blockquote {
+            position: relative;
+            margin: 40px 0;
+            padding: 32px 32px 32px 40px;
+            background: var(--quote-bg);
+            border-radius: 4px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .article blockquote::before {
+            content: '"';
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            font-family: var(--font-display);
+            font-size: 4rem;
+            line-height: 1;
+            color: var(--accent-light);
+            opacity: 0.5;
+        }
+
+        .article blockquote p {
+            font-family: var(--font-body);
+            font-size: 1rem;
+            font-style: normal;
+            line-height: var(--line-height);
+            color: var(--text-primary);
+            margin-bottom: 0;
+        }
+
+        .article blockquote p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Code */
+        .article code {
+            font-family: var(--font-mono);
+            font-size: 0.85em;
+            background: var(--bg-sidebar);
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .article pre {
+            background: var(--bg-sidebar);
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1.4em;
+        }
+
+        .article pre code {
+            background: none;
+            padding: 0;
+        }
+
+        /* Horizontal Rule */
+        .article hr {
+            border: none;
+            height: 1px;
+            background: var(--border);
+            margin: 48px 0;
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            text-align: center;
+            padding: 48px;
+        }
+
+        .empty-state-icon {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 24px;
+            opacity: 0.3;
+        }
+
+        .empty-state-title {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .empty-state-text {
+            font-size: 0.94rem;
+            color: var(--text-tertiary);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 900px) {
+            :root {
+                --sidebar-width: 280px;
+            }
+
+            html {
+                font-size: 17px;
+            }
+
+            .content-wrapper {
+                padding: 32px 32px 64px;
+            }
+
+            .header-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                width: 85%;
+                max-width: 320px;
+                height: 100vh;
+                z-index: 100;
+                transition: left 0.3s ease;
+                box-shadow: var(--shadow-md);
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.4);
+                z-index: 99;
+            }
+
+            .sidebar-overlay.visible {
+                display: block;
+            }
+
+            .mobile-header {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                padding: 16px 20px;
+                border-bottom: 1px solid var(--border);
+                background: var(--bg-page);
+                position: sticky;
+                top: 0;
+                z-index: 50;
+            }
+
+            .menu-button {
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: var(--bg-sidebar);
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                cursor: pointer;
+            }
+
+            .menu-button svg {
+                width: 20px;
+                height: 20px;
+                fill: var(--text-primary);
+            }
+
+            .mobile-title {
+                font-family: var(--font-display);
+                font-size: 1rem;
+                font-weight: 600;
+            }
+
+            .content-wrapper {
+                padding: 24px 20px 64px;
+            }
+
+            .header-title {
+                font-size: 1.3rem;
+            }
+
+            .header-thumbnail {
+                border-radius: 6px;
+            }
+
+            .play-icon {
+                width: 56px;
+                height: 56px;
+            }
+
+            .article blockquote {
+                padding: 24px 20px 24px 28px;
+                margin: 32px 0;
+            }
+
+            .article blockquote::before {
+                font-size: 3rem;
+                left: 8px;
+                top: 8px;
+            }
+
+            .article h2 {
+                font-size: 1.25rem;
+                margin: 36px 0 16px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-header,
+            .sidebar-overlay {
+                display: none !important;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .content {
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        /* Focus states for accessibility */
+        .video-item:focus-visible,
+        .search-input:focus-visible,
+        .watch-button:focus-visible,
+        .menu-button:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .video-item:focus {
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <header class="sidebar-header">
+                <h1 class="sidebar-title">Transcript <span>Library</span></h1>
+                <input
+                    type="search"
+                    class="search-input"
+                    id="search"
+                    placeholder="Filter transcripts..."
+                    autocomplete="off"
+                >
+                <div class="filter-tabs" id="filterTabs">
+                    <button class="filter-tab active" data-filter="all">All</button>
+                    <button class="filter-tab" data-filter="unread">Unread<span class="count" id="unreadCount"></span></button>
+                    <button class="filter-tab" data-filter="starred">Starred</button>
+                    <button class="filter-tab" data-filter="archived">Archived</button>
+                </div>
+            </header>
+            <nav class="video-list" id="videoList" role="navigation" aria-label="Video transcripts">
+                <!-- Video items will be rendered here -->
+            </nav>
+            <footer class="sidebar-footer">
+                <span class="video-count" id="videoCount">0 transcripts</span>
+            </footer>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Mobile Header -->
+            <header class="mobile-header">
+                <button class="menu-button" id="menuButton" aria-label="Open menu">
+                    <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+                </button>
+                <span class="mobile-title">Transcript Library</span>
+            </header>
+
+            <div class="content-wrapper">
+                <article class="content" id="content">
+                    <!-- Content will be rendered here -->
+                </article>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div class="sidebar-overlay" id="overlay"></div>
+
+    <script>
+        // Data will be injected here by build script
+        const SUMMARIES = /*SUMMARIES_DATA*/[];
+
+        // DOM Elements
+        const videoList = document.getElementById('videoList');
+        const content = document.getElementById('content');
+        const search = document.getElementById('search');
+        const videoCount = document.getElementById('videoCount');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const menuButton = document.getElementById('menuButton');
+        const filterTabs = document.getElementById('filterTabs');
+        const unreadCountEl = document.getElementById('unreadCount');
+
+        // State
+        let currentVideoId = null;
+        let filteredSummaries = [...SUMMARIES];
+        let currentFilter = 'all';
+        let videoState = {}; // { videoId: { read, starred, archived } }
+
+        // Configure marked
+        marked.setOptions({
+            breaks: true,
+            gfm: true
+        });
+
+        // Load state from server
+        async function loadState() {
+            try {
+                const response = await fetch('/api/state');
+                if (response.ok) {
+                    videoState = await response.json();
+                }
+            } catch (e) {
+                // Server not running, use empty state
+                videoState = {};
+            }
+            updateUnreadCount();
+        }
+
+        // Save state to server
+        async function saveState(videoId, updates) {
+            try {
+                await fetch(`/api/state/${videoId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updates)
+                });
+            } catch (e) {
+                console.warn('Failed to save state:', e);
+            }
+        }
+
+        // Get video state with defaults
+        function getVideoState(videoId) {
+            return videoState[videoId] || { read: false, starred: false, archived: false };
+        }
+
+        // Update unread count badge
+        function updateUnreadCount() {
+            const unreadCount = SUMMARIES.filter(v => {
+                const state = getVideoState(v.id);
+                return !state.read && !state.archived;
+            }).length;
+            unreadCountEl.textContent = unreadCount > 0 ? ` (${unreadCount})` : '';
+        }
+
+        // Format date
+        function formatDate(dateStr) {
+            const date = new Date(dateStr + 'T00:00:00');
+            return date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+
+        // Apply current filter
+        function applyFilter() {
+            const searchQuery = search.value.toLowerCase().trim();
+
+            filteredSummaries = SUMMARIES.filter(v => {
+                const state = getVideoState(v.id);
+
+                // Apply tab filter
+                if (currentFilter === 'unread' && state.read) return false;
+                if (currentFilter === 'starred' && !state.starred) return false;
+                if (currentFilter === 'archived' && !state.archived) return false;
+                if (currentFilter === 'all' && state.archived) return false; // Hide archived in "all"
+
+                // Apply search filter
+                if (searchQuery) {
+                    return v.title.toLowerCase().includes(searchQuery) ||
+                           v.channel.toLowerCase().includes(searchQuery);
+                }
+                return true;
+            });
+
+            renderSidebar();
+        }
+
+        // Render sidebar
+        function renderSidebar() {
+            videoList.innerHTML = filteredSummaries.map(video => {
+                const state = getVideoState(video.id);
+                const classes = [
+                    'video-item',
+                    video.id === currentVideoId ? 'active' : '',
+                    !state.read ? 'unread' : '',
+                    state.starred ? 'starred' : ''
+                ].filter(Boolean).join(' ');
+
+                return `
+                    <div
+                        class="${classes}"
+                        data-id="${video.id}"
+                        tabindex="0"
+                        role="button"
+                        aria-pressed="${video.id === currentVideoId}"
+                    >
+                        <div class="video-date">${formatDate(video.date)}</div>
+                        <div class="video-title">${escapeHtml(video.title)}</div>
+                        <div class="video-channel">${escapeHtml(video.channel)}</div>
+                    </div>
+                `;
+            }).join('');
+
+            const count = filteredSummaries.length;
+            const total = SUMMARIES.filter(v => currentFilter === 'archived' || !getVideoState(v.id).archived).length;
+            videoCount.textContent = count === total
+                ? `${count} transcript${count !== 1 ? 's' : ''}`
+                : `${count} of ${total} transcripts`;
+        }
+
+        // Render content
+        function renderContent(video) {
+            if (!video) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-8 12H7v-2h4v2zm6-4H7v-2h10v2zm0-4H7V5h10v2z"/>
+                        </svg>
+                        <h2 class="empty-state-title">Select a transcript</h2>
+                        <p class="empty-state-text">Choose a video from the sidebar to read its summary</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Remove the metadata block from the start of content (Channel, URL, Published, Transcribed, Duration)
+            let cleanContent = video.content
+                .replace(/\*\*Channel:\*\*[^\n]*\n?/g, '')
+                .replace(/\*\*URL:\*\*[^\n]*\n?/g, '')
+                .replace(/\*\*Published:\*\*[^\n]*\n?/g, '')
+                .replace(/\*\*Transcribed:\*\*[^\n]*\n?/g, '')
+                .replace(/\*\*Duration:\*\*[^\n]*\n?/g, '')
+                .replace(/^\s*\n/gm, '\n'); // Clean up extra blank lines
+
+            const articleHtml = marked.parse(cleanContent);
+            const state = getVideoState(video.id);
+
+            // Extract published date from content if available
+            const publishedMatch = video.content.match(/\*\*Published:\*\* ([^\n]+)/);
+            const publishedDate = publishedMatch ? publishedMatch[1] : null;
+
+            content.innerHTML = `
+                <header class="video-header">
+                    <div class="header-content">
+                        <h1 class="header-title">${escapeHtml(video.title)}</h1>
+                        <div class="header-meta">
+                            <span class="header-channel">${escapeHtml(video.channel)}</span>
+                            <span class="header-meta-divider"></span>
+                            <span class="header-date">${publishedDate ? publishedDate : formatDate(video.date)}</span>
+                        </div>
+                        <div class="header-actions">
+                            <a href="${video.url}" target="_blank" rel="noopener" class="action-button youtube" title="Watch on YouTube">
+                                <svg viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                            </a>
+                            ${state.read ? `
+                            <button class="action-button unread-btn" onclick="markAsUnread('${video.id}')" title="Mark as Unread">
+                                <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                            </button>
+                            ` : ''}
+                            <button class="action-button ${state.starred ? 'starred' : ''}" onclick="toggleStar('${video.id}')" title="${state.starred ? 'Unstar' : 'Star'}">
+                                <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                            </button>
+                            <button class="action-button ${state.archived ? 'archived' : ''}" onclick="toggleArchive('${video.id}')" title="${state.archived ? 'Unarchive' : 'Archive'}">
+                                <svg viewBox="0 0 24 24"><path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z"/></svg>
+                            </button>
+                            <button class="action-button delete" onclick="deleteTranscript('${video.id}', '${escapeHtml(video.title).replace(/'/g, "\\'")}')" title="Delete">
+                                <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <a href="${video.url}" target="_blank" rel="noopener" class="header-thumbnail">
+                        <img src="${video.thumbnail}" alt="${escapeHtml(video.title)}" loading="lazy">
+                        <div class="play-icon">
+                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
+                    </a>
+                </header>
+                <div class="article" id="articleContent">
+                    ${articleHtml}
+                </div>
+            `;
+
+            // Re-trigger animation
+            content.style.animation = 'none';
+            content.offsetHeight;
+            content.style.animation = '';
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Setup scroll tracking for read status
+            setupScrollTracking(video.id);
+        }
+
+        // Setup scroll tracking to mark as read at 50%
+        function setupScrollTracking(videoId) {
+            const state = getVideoState(videoId);
+            if (state.read) return; // Already read
+
+            let hasMarkedRead = false;
+
+            const checkScroll = () => {
+                if (hasMarkedRead) return;
+
+                const article = document.getElementById('articleContent');
+                if (!article) return;
+
+                const rect = article.getBoundingClientRect();
+                const articleHeight = rect.height;
+                const viewportHeight = window.innerHeight;
+                const scrolled = window.scrollY;
+
+                // Calculate how much of the article has been scrolled past
+                const articleTop = rect.top + scrolled;
+                const scrolledPast = scrolled + viewportHeight - articleTop;
+                const percentScrolled = scrolledPast / articleHeight;
+
+                if (percentScrolled >= 0.5) {
+                    hasMarkedRead = true;
+                    markAsRead(videoId);
+                }
+            };
+
+            window.addEventListener('scroll', checkScroll);
+            // Also check on initial load (in case content is short)
+            setTimeout(checkScroll, 500);
+        }
+
+        // Mark video as read
+        async function markAsRead(videoId) {
+            if (!videoState[videoId]) {
+                videoState[videoId] = { read: false, starred: false, archived: false };
+            }
+            videoState[videoId].read = true;
+            await saveState(videoId, { read: true });
+            updateUnreadCount();
+            applyFilter(); // Re-render sidebar to update unread indicator
+        }
+
+        // Mark video as unread
+        async function markAsUnread(videoId) {
+            if (!videoState[videoId]) {
+                videoState[videoId] = { read: false, starred: false, archived: false };
+            }
+            videoState[videoId].read = false;
+            await saveState(videoId, { read: false });
+            updateUnreadCount();
+            applyFilter();
+
+            // Re-render current content to update button state
+            const video = SUMMARIES.find(v => v.id === videoId);
+            if (video && currentVideoId === videoId) {
+                renderContent(video);
+            }
+        }
+
+        // Toggle star
+        async function toggleStar(videoId) {
+            const state = getVideoState(videoId);
+            const newStarred = !state.starred;
+
+            if (!videoState[videoId]) {
+                videoState[videoId] = { read: false, starred: false, archived: false };
+            }
+            videoState[videoId].starred = newStarred;
+
+            await saveState(videoId, { starred: newStarred });
+            applyFilter();
+
+            // Re-render current content to update button state
+            const video = SUMMARIES.find(v => v.id === videoId);
+            if (video && currentVideoId === videoId) {
+                renderContent(video);
+            }
+        }
+
+        // Toggle archive
+        async function toggleArchive(videoId) {
+            const state = getVideoState(videoId);
+            const newArchived = !state.archived;
+
+            if (!videoState[videoId]) {
+                videoState[videoId] = { read: false, starred: false, archived: false };
+            }
+            videoState[videoId].archived = newArchived;
+
+            await saveState(videoId, { archived: newArchived });
+            applyFilter();
+            updateUnreadCount();
+
+            // If we archived the current video and we're not in archived view, select next
+            if (newArchived && currentFilter !== 'archived') {
+                if (filteredSummaries.length > 0) {
+                    selectVideo(filteredSummaries[0].id);
+                } else {
+                    currentVideoId = null;
+                    renderContent(null);
+                }
+            } else {
+                const video = SUMMARIES.find(v => v.id === videoId);
+                if (video && currentVideoId === videoId) {
+                    renderContent(video);
+                }
+            }
+        }
+
+        // Delete transcript
+        async function deleteTranscript(videoId, title) {
+            if (!confirm(`Delete transcript for "${title}"?\n\nThis will permanently remove the summary, transcript, metadata, and audio files.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/delete/${videoId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Remove from local data
+                    const index = SUMMARIES.findIndex(v => v.id === videoId);
+                    if (index > -1) {
+                        SUMMARIES.splice(index, 1);
+                    }
+                    delete videoState[videoId];
+
+                    applyFilter();
+                    updateUnreadCount();
+
+                    // Select next video or show empty state
+                    if (filteredSummaries.length > 0) {
+                        selectVideo(filteredSummaries[0].id);
+                    } else {
+                        currentVideoId = null;
+                        renderContent(null);
+                    }
+                } else {
+                    alert(`Failed to delete: ${data.error}`);
+                }
+            } catch (error) {
+                alert(`Failed to delete: ${error.message}\n\nMake sure the server is running (python serve.py)`);
+            }
+        }
+
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Select video
+        function selectVideo(id) {
+            currentVideoId = id;
+            const video = SUMMARIES.find(v => v.id === id);
+
+            // Update URL hash
+            if (id) {
+                history.pushState(null, '', `#${id}`);
+            } else {
+                history.pushState(null, '', window.location.pathname);
+            }
+
+            applyFilter(); // This calls renderSidebar
+            renderContent(video);
+            closeMobileMenu();
+        }
+
+        // Mobile menu
+        function openMobileMenu() {
+            sidebar.classList.add('open');
+            overlay.classList.add('visible');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobileMenu() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('visible');
+            document.body.style.overflow = '';
+        }
+
+        // Event Listeners
+        videoList.addEventListener('click', (e) => {
+            const item = e.target.closest('.video-item');
+            if (item) {
+                selectVideo(item.dataset.id);
+            }
+        });
+
+        videoList.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                const item = e.target.closest('.video-item');
+                if (item) {
+                    e.preventDefault();
+                    selectVideo(item.dataset.id);
+                }
+            }
+        });
+
+        search.addEventListener('input', () => {
+            applyFilter();
+        });
+
+        // Filter tab clicks
+        filterTabs.addEventListener('click', (e) => {
+            const tab = e.target.closest('.filter-tab');
+            if (!tab) return;
+
+            // Update active tab
+            filterTabs.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            currentFilter = tab.dataset.filter;
+            applyFilter();
+
+            // Select first item if current selection is not in filtered list
+            if (currentVideoId && !filteredSummaries.find(v => v.id === currentVideoId)) {
+                if (filteredSummaries.length > 0) {
+                    selectVideo(filteredSummaries[0].id);
+                } else {
+                    currentVideoId = null;
+                    renderContent(null);
+                }
+            }
+        });
+
+        menuButton.addEventListener('click', openMobileMenu);
+        overlay.addEventListener('click', closeMobileMenu);
+
+        // Handle hash changes
+        window.addEventListener('hashchange', () => {
+            const id = window.location.hash.slice(1);
+            if (id && SUMMARIES.find(v => v.id === id)) {
+                selectVideo(id);
+            }
+        });
+
+        // Initialize
+        async function init() {
+            // Sort by date (newest first)
+            SUMMARIES.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // Load state from server
+            await loadState();
+
+            applyFilter();
+
+            // Check for hash in URL
+            const hashId = window.location.hash.slice(1);
+            if (hashId && SUMMARIES.find(v => v.id === hashId)) {
+                selectVideo(hashId);
+            } else if (filteredSummaries.length > 0) {
+                selectVideo(filteredSummaries[0].id);
+            } else {
+                renderContent(null);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

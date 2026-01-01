@@ -1,0 +1,7 @@
+index.html
+audio/
+metadata/
+summaries/
+transcripts/
+state.json
+*.srt
