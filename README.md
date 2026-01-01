@@ -11,7 +11,7 @@ See [SKILL.md](./SKILL.md) for complete documentation and usage instructions.
 To use this skill with Claude Code, clone it into your skills directory:
 
 ```bash
-git clone https://github.com/HartreeWorks/claude-skill--youtube-transcribe.git ~/.claude/skills/youtube-transcribe
+git clone https://github.com/HartreeWorks/skill--youtube-transcribe.git ~/.claude/skills/youtube-transcribe
 ```
 
 Then restart Claude Code to load the skill.
