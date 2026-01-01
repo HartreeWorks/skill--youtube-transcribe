@@ -1,18 +1,18 @@
 ---
 name: youtube-transcribe
-description: Transcribe YouTube videos using Parakeet MLX. Use when the user says "transcribe", "transcript", "transcription" with a YouTube URL, or asks to "get the text from this video", "what does this video say", or wants subtitles/captions from a YouTube video.
+description: Transcribe YouTube videos using Parakeet MLX. Use when the user says "transcribe", "transcript", "transcription" with a YouTube URL, or asks to "get the text from this video", "what does this video say", or wants subtitles/captions from a YouTube video. Default uses Parakeet (fast, local). If user explicitly requests diarisation/speaker identification, use AssemblyAI instead.
 ---
 
 # YouTube Transcribe Skill
 
-Transcribe YouTube videos locally using Parakeet MLX (fast, runs on Apple Silicon), then generate a summary.
+Transcribe YouTube videos locally using Parakeet MLX (fast, runs on Apple Silicon), then generate a summary. Optionally supports speaker diarisation via AssemblyAI when explicitly requested.
 
 ## Directory Structure
 
 ```
 ~/.claude/skills/youtube-transcribe/
 ├── audio/        # Downloaded audio files (MP3)
-├── transcripts/  # Transcription files (.txt plain text, .srt with timestamps)
+├── transcripts/  # Transcription files (.txt plain text, .md with speaker labels if diarised, .srt with timestamps)
 ├── metadata/     # Video metadata JSON (title, description, links, etc.)
 └── summaries/    # Markdown summaries with chapters and timestamped quotes
 ```
@@ -105,9 +105,13 @@ Invoke the **transcribe-audio** skill to transcribe the downloaded audio:
 - **Audio file**: `~/.claude/skills/youtube-transcribe/audio/${FILENAME}.mp3`
 - **Output directory**: `~/.claude/skills/youtube-transcribe/transcripts`
 
-The transcribe-audio skill will run Parakeet MLX and output two files:
+**Default (Parakeet):** Unless the user explicitly requests diarisation/speaker identification, use Parakeet MLX. The transcribe-audio skill will output:
 - `${FILENAME}.txt` - Plain text transcript for easy reading
 - `${FILENAME}.srt` - Timestamped subtitle file for generating chapters and quote timestamps
+
+**With diarisation (AssemblyAI):** Only if the user explicitly requests speaker identification/diarisation, invoke transcribe-audio with the diarisation option. This uses AssemblyAI and outputs:
+- `${FILENAME}.md` - Markdown transcript with speaker labels
+- `${FILENAME}.srt` - Timestamped subtitle file
 
 ### Step 4: Read metadata for context
 
@@ -119,7 +123,7 @@ Read the metadata JSON to extract useful info for the summary:
 
 ### Step 5: Generate summary with chapters and timestamps
 
-Read the transcript (.txt), SRT file (.srt), and metadata, then create a markdown summary.
+Read the transcript (.txt or .md if diarisation was used), SRT file (.srt), and metadata, then create a markdown summary.
 
 Save to `~/.claude/skills/youtube-transcribe/summaries/${FILENAME}.md`
 
