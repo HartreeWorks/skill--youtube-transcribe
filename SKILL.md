@@ -193,7 +193,15 @@ Summary template:
 (Extract any URLs from the video description)
 ```
 
-### Step 6: Display summary in chat
+### Step 6: Rebuild the viewer
+
+After creating the summary file, rebuild the viewer so the new transcript appears in the library:
+
+```bash
+python ~/.claude/skills/youtube-transcribe/viewer/build.py
+```
+
+### Step 7: Display summary in chat
 
 **IMPORTANT:** After generating the summary, display the full markdown summary content directly in the chat response so the user can:
 - Read the summary immediately
