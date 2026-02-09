@@ -224,9 +224,3 @@ Example: `2025-12-19-never-gonna-give-you-up-dQw4w9WgXcQ`
 - English only (Parakeet is optimised for English)
 - For other languages, consider using whisper-cpp instead
 - **zsh compatibility**: Video titles often contain special characters like `[brackets]` or `(parentheses)` which zsh interprets as glob patterns. Always wrap commands involving video titles in `bash -c '...'` to avoid parse errors.
-
-
-## Update check
-
-This skill is managed by [skills.sh](https://skills.sh). To check for updates, run `npx skills update`.
-
