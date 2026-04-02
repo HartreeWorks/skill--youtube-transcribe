@@ -11,10 +11,11 @@ Transcribe YouTube videos locally using Parakeet MLX (fast, runs on Apple Silico
 
 ```
 ~/.claude/skills/youtube-transcribe/
-├── audio/        # Downloaded audio files (MP3)
-├── transcripts/  # Transcription files (.txt plain text, .md with speaker labels if diarised, .srt with timestamps)
-├── metadata/     # Video metadata JSON (title, description, links, etc.)
-└── summaries/    # Markdown summaries with chapters and timestamped quotes
+└── data/
+    ├── audio/        # Downloaded audio files (MP3) — gitignored (large binaries)
+    ├── transcripts/  # Transcription files (.txt plain text, .md with speaker labels if diarised, .srt with timestamps)
+    ├── metadata/     # Video metadata JSON (title, description, links, etc.)
+    └── summaries/    # Markdown summaries with chapters and timestamped quotes
 ```
 
 ## Prerequisites
@@ -75,7 +76,7 @@ FILENAME="<FILENAME_FROM_STEP_1>"
 
 # Download audio only (no --write-info-json to avoid 500KB+ files)
 yt-dlp -x --audio-format mp3 \
-  -o "$HOME/.claude/skills/youtube-transcribe/audio/${FILENAME}.%(ext)s" \
+  -o "$HOME/.claude/skills/youtube-transcribe/data/audio/${FILENAME}.%(ext)s" \
   "<YOUTUBE_URL>"
 
 # Extract lean metadata (~2-5KB instead of 500KB+)
@@ -103,7 +104,7 @@ yt-dlp --dump-json "<YOUTUBE_URL>" 2>/dev/null | jq "{
   availability,
   live_status,
   was_live
-}" > ~/.claude/skills/youtube-transcribe/metadata/${FILENAME}.json
+}" > ~/.claude/skills/youtube-transcribe/data/metadata/${FILENAME}.json
 '
 ```
 
@@ -113,8 +114,8 @@ The lean metadata JSON contains: title, description (with links), upload date, c
 
 Invoke the **transcribe-audio** skill to transcribe the downloaded audio:
 
-- **Audio file**: `~/.claude/skills/youtube-transcribe/audio/${FILENAME}.mp3`
-- **Output directory**: `~/.claude/skills/youtube-transcribe/transcripts`
+- **Audio file**: `~/.claude/skills/youtube-transcribe/data/audio/${FILENAME}.mp3`
+- **Output directory**: `~/.claude/skills/youtube-transcribe/data/transcripts`
 
 **Default (Parakeet):** Unless the user explicitly requests diarisation/speaker identification, use Parakeet MLX. The transcribe-audio skill will output:
 - `${FILENAME}.txt` - Plain text transcript for easy reading
@@ -136,7 +137,7 @@ Read the metadata JSON to extract useful info for the summary:
 
 Read the transcript (.txt or .md if diarisation was used), SRT file (.srt), and metadata, then create a markdown summary.
 
-Save to `~/.claude/skills/youtube-transcribe/summaries/${FILENAME}.md`
+Save to `~/.claude/skills/youtube-transcribe/data/summaries/${FILENAME}.md`
 
 **Generating Chapters:**
 1. Read the SRT file to understand content timing

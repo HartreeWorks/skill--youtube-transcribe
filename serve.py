@@ -68,11 +68,11 @@ def delete_transcript(video_id: str) -> tuple[bool, str]:
     deleted_files = []
 
     patterns = [
-        ('summaries', f'*-{video_id}.md'),
-        ('metadata', f'*-{video_id}.json'),
-        ('transcripts', f'*-{video_id}.txt'),
-        ('transcripts', f'*-{video_id}.srt'),
-        ('audio', f'*-{video_id}.mp3'),
+        ('data/summaries', f'*-{video_id}.md'),
+        ('data/metadata', f'*-{video_id}.json'),
+        ('data/transcripts', f'*-{video_id}.txt'),
+        ('data/transcripts', f'*-{video_id}.srt'),
+        ('data/audio', f'*-{video_id}.mp3'),
     ]
 
     for subdir, pattern in patterns:

@@ -84,7 +84,7 @@ def build_viewer():
     # Paths
     script_dir = Path(__file__).parent
     skill_dir = script_dir.parent
-    summaries_dir = skill_dir / 'summaries'
+    summaries_dir = skill_dir / 'data' / 'summaries'
     template_path = script_dir / 'template.html'
     output_path = skill_dir / 'index.html'
 
